@@ -1,0 +1,49 @@
+# config.example.yml
+server:
+  port: 8080
+
+providers:
+  - provider: "openai"
+    api_url: "https://api.openai.com/v1/chat/completions"
+    api_key: "your-api-key-1"
+    timeout: 30
+    is_default: true
+    models:
+      - name: "gpt-3.5-turbo"
+        weight: 10
+        max_tokens: 2000
+        temperature: 0.3
+
+cache:
+  enabled: true
+  types: ["memory", "redis"]
+
+  # 内存缓存特定配置
+  memory:
+    ttl:
+      value: "permanent"          # 1小时 (支持: 30s, 5m, 2h, 1d, 1w, permanent)
+    max_size: 100000000        # 最多存储1亿条记录
+
+  # Redis缓存特定配置
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+    db: 0
+    ttl:
+      value: "permanent"          # 7天 (也可以使用: permanent 表示永久存储)
+
+prompt:
+  template: "Translate the following text from %s to %s:\n\n%s"
+
+auth:
+  tokens:
+    - "tr-xxxxxxxxxxxxxxxx"
+
+log:
+  enabled: true
+  file_path: "logs/translation.log"
+  max_size: 100          # 单个文件最大大小，单位：MB
+  max_age: 30            # 保留天数
+  max_backups: 10        # 最大备份文件数
+  queue_size: 10000       # 异步队列大小

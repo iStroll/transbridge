@@ -1,0 +1,14 @@
+# .gitignore
+.idea/
+.vscode/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.env
+dist/
+vendor/
+config_transbrige.yml
