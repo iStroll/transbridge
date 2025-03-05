@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-TransBridge 是一个强大的翻译 API 代理服务，兼容 DeepL API 接口格式，通过调用各种 AI API 实现高质量的机器翻译功能。它提供了丰富的配置选项、灵活的缓存机制和完善的日志记录，可以作为多种 AI 翻译服务的统一代理。
+TransBridge 是一个强大的翻译 API 代理服务，通过调用各种大模型 API 实现高质量的机器翻译功能，并提供兼容 DeepL API 接口格式。它提供了丰富的配置选项、灵活的缓存机制和完善的日志记录，可以作为多种大模型翻译服务的统一代理。
 
 ## 🌟 主要特点
 
@@ -16,6 +16,9 @@ TransBridge 是一个强大的翻译 API 代理服务，兼容 DeepL API 接口�
 - **跨平台**：支持 Linux、macOS 和 Windows
 
 ## 🚀 快速开始
+
+### 直接体验
+[https://fruitbars.github.io/transbridge/](https://fruitbars.github.io/transbridge/)
 
 ### 获取项目
 ```bash
@@ -147,13 +150,9 @@ sudo ./install-transbridge.sh
 
 这将创建一个系统服务，并自动启动。
 
-## 🔄 版本更新
-
-详见 [CHANGELOG.md](CHANGELOG.md)
-
 ## 🤝 贡献
 
-欢迎贡献代码或提出建议！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解更多信息。
+欢迎贡献代码或提出建议！
 
 ## 📜 许可证
 
