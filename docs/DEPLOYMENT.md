@@ -27,9 +27,9 @@
 
 ```bash
 # 从源码编译
-git clone https://github.com/your-username/transbridge.git
+git clone https://github.com/fruitbars/transbridge.git
 cd transbridge
-make build
+./build.sh
 
 # 或直接下载编译好的二进制文件
 ```
@@ -129,33 +129,59 @@ chmod +x install-transbridge.sh
 sudo ./install-transbridge.sh
 ```
 
-## Docker 部署
+## 🐳 Docker 部署
 
-1. 创建 Dockerfile：
+### 使用 Docker Compose（推荐）
 
-```dockerfile
-FROM alpine:latest
+项目提供了完整的 Docker Compose 配置，可以快速部署 TransBridge 服务和 Redis 缓存：
 
-WORKDIR /app
+1. 确保已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)
 
-COPY transbridge /app/
-COPY config.yml /app/
-
-EXPOSE 8080
-
-CMD ["/app/transbridge", "-config", "/app/config.yml"]
+2. 创建 `.env` 文件（或使用项目提供的示例）
+```bash
+cp .env.example .env
+# 根据需要修改 .env 文件中的配置
 ```
 
-2. 构建镜像：
+3. 启动服务
+```bash
+docker-compose up -d
+```
+
+4. 查看日志
+```bash
+docker-compose logs -f
+```
+
+5. 停止服务
+```bash
+docker-compose down
+```
+
+Docker Compose 配置提供了以下功能：
+- 自动构建和启动 TransBridge 服务
+- 可选的 Redis 缓存服务
+- 配置文件和日志目录挂载
+- 健康检查和自动重启
+- 灵活的环境变量配置
+
+### 使用 Docker 构建和运行
+
+也可以直接使用 Docker 命令构建和运行：
 
 ```bash
+# 构建镜像
 docker build -t transbridge .
-```
 
-3. 运行容器：
+# 运行容器
+docker run -d -p 8080:8080 -v $(pwd)/config.yml:/app/config.yml --name transbridge transbridge
 
-```bash
-docker run -d -p 8080:8080 --name transbridge transbridge
+# 指定版本信息构建
+docker build \
+  --build-arg BUILD_VERSION=1.0.0 \
+  --build-arg BUILD_DATE=$(date -u +'%Y-%m-%d_%H:%M:%S') \
+  --build-arg COMMIT_HASH=$(git rev-parse --short HEAD) \
+  -t transbridge:1.0.0 .
 ```
 
 ## Kubernetes 部署

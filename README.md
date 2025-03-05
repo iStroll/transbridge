@@ -131,7 +131,7 @@ curl -X POST "http://localhost:8080/v2/translate" \
 
 ## 📋 详细文档
 
-- [配置详解](CONFIGURATION.md)
+- [配置详解](docs/CONFIGURATION.md)
 - [API 接口文档](docs/API.md)
 - [部署指南](docs/DEPLOYMENT.md)
 
