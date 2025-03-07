@@ -18,7 +18,11 @@ TransBridge 是一个强大的翻译 API 代理服务，通过调用各种大模
 ## 🚀 快速开始
 
 ### 直接体验
-[https://fruitbars.github.io/transbridge/](https://fruitbars.github.io/transbridge/)
+
+🌐 演示地址：[https://fruitbars.github.io/transbridge/](https://fruitbars.github.io/transbridge/)
+🔗 API服务: [https://freeapi.fanyimao.cn/](https://freeapi.fanyimao.cn/) 使用 Authorization: Bearer tr-98584e33-f387-42cc-a467-f02513bd400d 进行调用
+
+在沉浸式翻译中直接配置地址使用：https://freeapi.fanyimao.cn/translate?token=tr-98584e33-f387-42cc-a467-f02513bd400d
 
 ### 获取项目
 ```bash
