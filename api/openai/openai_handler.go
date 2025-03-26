@@ -3,6 +3,7 @@ package openai
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -67,8 +68,18 @@ func (h *OpenAIHandler) HandleChatCompletion(w http.ResponseWriter, r *http.Requ
 		model = h.modelManager.GetDefaultModel()
 	}
 
+	// 尝试获取 OpenAI 翻译器
+	openaiTranslator, ok := model.(*translator.OpenAITranslator)
+	if !ok {
+		h.sendError(w, fmt.Sprintf("Model %s/%s is not an OpenAI model", providerName, modelName), "invalid_model", http.StatusBadRequest)
+		return
+	}
+
+	// 创建聊天完成实例
+	chatCompletion := translator.NewOpenAIChatCompletion(openaiTranslator)
+
 	// 处理请求
-	openaiResp, err := model.CreateChatCompletion(r.Context(), req)
+	openaiResp, err := chatCompletion.CreateChatCompletion(r.Context(), req)
 	if err != nil {
 		h.sendError(w, err.Error(), "internal_error", http.StatusInternalServerError)
 		return

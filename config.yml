@@ -14,6 +14,20 @@ providers:
         max_tokens: 2000
         temperature: 0.3
 
+  - provider: "ollama"
+    api_url: "http://localhost:11434/api/chat"
+    timeout: 30
+    is_default: false
+    models:
+      - name: "llama2"
+        weight: 5
+        max_tokens: 2000
+        temperature: 0.3
+      - name: "mistral"
+        weight: 5
+        max_tokens: 2000
+        temperature: 0.3
+
 cache:
   enabled: true
   types: ["memory", "redis"]

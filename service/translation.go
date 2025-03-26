@@ -1,4 +1,3 @@
-// service/translation.go
 package service
 
 import (
@@ -70,7 +69,7 @@ func (s *TranslationService) Translate(ctx context.Context, provider, model, tex
 		}
 	}
 
-	var usedTranslator *translator.OpenAITranslator
+	var usedTranslator translator.Translator
 	var err error
 	// 1. 首先尝试获取指定的翻译器
 	if provider != "" && model != "" {
@@ -82,6 +81,7 @@ func (s *TranslationService) Translate(ctx context.Context, provider, model, tex
 	} else {
 		usedTranslator = s.modelManager.GetRandomModel()
 	}
+
 	// 3. 执行翻译
 	translation, err := usedTranslator.Translate(text, sourceLang, targetLang)
 	if err != nil {

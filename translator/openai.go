@@ -19,17 +19,21 @@ type TranslationMetrics struct {
 	ModelLatency float64 `json:"model_latency"` // 模型处理延迟（毫秒）
 }
 
+// OpenAITranslator 实现 OpenAI 的翻译器
 type OpenAITranslator struct {
-	provider    string
-	apiURL      string
-	apiKey      string
-	model       string
-	timeout     int
-	maxTokens   int
-	temperature float32
-	client      *http.Client
-	lastMetrics TranslationMetrics
+	Provider    string
+	ApiURL      string
+	ApiKey      string
+	Model       string
+	Timeout     int
+	MaxTokens   int
+	Temperature float32
+	Client      *http.Client
+	LastMetrics TranslationMetrics
 }
+
+// 确保 OpenAITranslator 实现了 Translator 接口
+var _ Translator = (*OpenAITranslator)(nil)
 
 // NewOpenAITranslator 创建新的OpenAI翻译器实例
 func NewOpenAITranslator(provider, apiURL, apiKey, model string, timeout, maxTokens int, temperature float32) *OpenAITranslator {
@@ -45,14 +49,14 @@ func NewOpenAITranslator(provider, apiURL, apiKey, model string, timeout, maxTok
 	}
 
 	return &OpenAITranslator{
-		provider:    provider,
-		apiURL:      apiURL,
-		apiKey:      apiKey,
-		model:       model,
-		timeout:     timeout,
-		maxTokens:   maxTokens,
-		temperature: temperature,
-		client: &http.Client{
+		Provider:    provider,
+		ApiURL:      apiURL,
+		ApiKey:      apiKey,
+		Model:       model,
+		Timeout:     timeout,
+		MaxTokens:   maxTokens,
+		Temperature: temperature,
+		Client: &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 	}
@@ -60,7 +64,7 @@ func NewOpenAITranslator(provider, apiURL, apiKey, model string, timeout, maxTok
 
 // Translate 实现翻译功能
 func (t *OpenAITranslator) Translate(text, sourceLang, targetLang string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t.timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
 
 	return t.TranslateWithContext(ctx, text, sourceLang, targetLang)
@@ -68,7 +72,7 @@ func (t *OpenAITranslator) Translate(text, sourceLang, targetLang string) (strin
 
 // TranslateWithContext 支持上下文的翻译方法
 func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, text, sourceLang, targetLang string) (string, error) {
-	log.Println(t.apiURL, t.model)
+	log.Println(t.ApiURL, t.Model)
 	// 构造翻译提示
 	prompt := fmt.Sprintf("Translate the following text from %s to %s. Only return the translated text without any explanations:\n\n%s",
 		sourceLang, targetLang, text)
@@ -86,10 +90,10 @@ func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, text, sourc
 
 	// 构造请求
 	reqBody := openai.ChatCompletionRequest{
-		Model:       t.model,
+		Model:       t.Model,
 		Messages:    messages,
-		Temperature: t.temperature,
-		MaxTokens:   t.maxTokens,
+		Temperature: t.Temperature,
+		MaxTokens:   t.MaxTokens,
 	}
 
 	reqData, err := json.Marshal(reqBody)
@@ -98,17 +102,17 @@ func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, text, sourc
 	}
 
 	// 创建请求
-	req, err := http.NewRequestWithContext(ctx, "POST", t.apiURL, bytes.NewBuffer(reqData))
+	req, err := http.NewRequestWithContext(ctx, "POST", t.ApiURL, bytes.NewBuffer(reqData))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.apiKey))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.ApiKey))
 
 	// 发送请求
-	resp, err := t.client.Do(req)
+	resp, err := t.Client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("request failed: %w", err)
 	}
@@ -128,9 +132,65 @@ func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, text, sourc
 	return result.Choices[0].Message.Content, nil
 }
 
-// CreateChatCompletion 提供原生的ChatCompletion接口
-func (t *OpenAITranslator) CreateChatCompletion(ctx context.Context, oaiRequest openai.ChatCompletionRequest) (*openai.ChatCompletionResponse, error) {
+// GetProvider 获取提供商名称
+func (t *OpenAITranslator) GetProvider() string {
+	return t.Provider
+}
 
+// GetAPIURL 获取 API URL
+func (t *OpenAITranslator) GetAPIURL() string {
+	return t.ApiURL
+}
+
+// GetModel 获取模型名称
+func (t *OpenAITranslator) GetModel() string {
+	return t.Model
+}
+
+// GetMetrics 获取最近一次请求的指标
+func (t *OpenAITranslator) GetMetrics() TranslationMetrics {
+	return t.LastMetrics
+}
+
+// Close 实现清理接口
+func (t *OpenAITranslator) Close() error {
+	// OpenAI 客户端当前不需要特别的清理操作
+	return nil
+}
+
+// ValidateConfig 验证配置是否有效
+func (t *OpenAITranslator) ValidateConfig() error {
+	if t.Provider == "" {
+		return fmt.Errorf("provider is required")
+	}
+	if t.Model == "" {
+		return fmt.Errorf("model is required")
+	}
+	if t.Client == nil {
+		return fmt.Errorf("client is not initialized")
+	}
+	return nil
+}
+
+// String 实现 Stringer 接口
+func (t *OpenAITranslator) String() string {
+	return fmt.Sprintf("%s/%s", t.Provider, t.Model)
+}
+
+// OpenAIChatCompletion 提供 OpenAI 聊天完成功能
+type OpenAIChatCompletion struct {
+	*OpenAITranslator
+}
+
+// NewOpenAIChatCompletion 创建新的 OpenAI 聊天完成实例
+func NewOpenAIChatCompletion(translator *OpenAITranslator) *OpenAIChatCompletion {
+	return &OpenAIChatCompletion{
+		OpenAITranslator: translator,
+	}
+}
+
+// CreateChatCompletion 提供原生的ChatCompletion接口
+func (t *OpenAIChatCompletion) CreateChatCompletion(ctx context.Context, oaiRequest openai.ChatCompletionRequest) (*openai.ChatCompletionResponse, error) {
 	reqData, err := json.Marshal(oaiRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -139,16 +199,16 @@ func (t *OpenAITranslator) CreateChatCompletion(ctx context.Context, oaiRequest 
 	log.Println(string(reqData))
 
 	req, err := http.NewRequestWithContext(ctx, "POST",
-		t.apiURL,
+		t.ApiURL,
 		bytes.NewBuffer(reqData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.apiKey))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.ApiKey))
 
-	resp, err := t.client.Do(req)
+	resp, err := t.Client.Do(req)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("request failed: %w", err)
@@ -161,55 +221,4 @@ func (t *OpenAITranslator) CreateChatCompletion(ctx context.Context, oaiRequest 
 	}
 
 	return &result, nil
-}
-
-// GetModelInfo 获取模型配置信息
-func (t *OpenAITranslator) GetModelInfo() map[string]interface{} {
-	return map[string]interface{}{
-		"provider": t.provider,
-		"model":    t.model,
-		"api_url":  t.apiURL,
-	}
-}
-
-// GetProvider 获取提供商名称
-func (t *OpenAITranslator) GetProvider() string {
-	return t.provider
-}
-func (t *OpenAITranslator) GetAPIURL() string {
-	return t.apiURL
-}
-
-func (t *OpenAITranslator) GetModel() string {
-	return t.model
-}
-
-// GetMetrics 获取最近一次请求的指标
-func (t *OpenAITranslator) GetMetrics() TranslationMetrics {
-	return t.lastMetrics
-}
-
-// Close 实现清理接口
-func (t *OpenAITranslator) Close() error {
-	// OpenAI 客户端当前不需要特别的清理操作
-	return nil
-}
-
-// ValidateConfig 验证配置是否有效
-func (t *OpenAITranslator) ValidateConfig() error {
-	if t.provider == "" {
-		return fmt.Errorf("provider is required")
-	}
-	if t.model == "" {
-		return fmt.Errorf("model is required")
-	}
-	if t.client == nil {
-		return fmt.Errorf("client is not initialized")
-	}
-	return nil
-}
-
-// String 实现 Stringer 接口
-func (t *OpenAITranslator) String() string {
-	return fmt.Sprintf("%s/%s", t.provider, t.model)
 }

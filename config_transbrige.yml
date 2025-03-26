@@ -3,7 +3,7 @@ server:
   port: 8080
 
 providers:
-  - provider: "simple-one-api"
+  - provider: "openai"
     api_url: "http://127.0.0.1:9090/v1/chat/completions"
     api_key: "d2637479653f49009c79a7e224794df8"
     timeout: 60

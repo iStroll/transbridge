@@ -23,7 +23,7 @@ func (m ModelIdentifier) String() string {
 
 // ModelManager 管理多个服务提供商和其模型
 type ModelManager struct {
-	translators  map[ModelIdentifier]*OpenAITranslator
+	translators  map[ModelIdentifier]Translator
 	modelWeights map[ModelIdentifier]int
 	defaultModel ModelIdentifier
 	mu           sync.RWMutex
@@ -35,7 +35,7 @@ func NewModelManager(providers []config.ProviderConfig) (*ModelManager, error) {
 	}
 
 	mm := &ModelManager{
-		translators:  make(map[ModelIdentifier]*OpenAITranslator),
+		translators:  make(map[ModelIdentifier]Translator),
 		modelWeights: make(map[ModelIdentifier]int),
 	}
 
@@ -54,20 +54,31 @@ func NewModelManager(providers []config.ProviderConfig) (*ModelManager, error) {
 			identifier := ModelIdentifier{
 				Provider: provider.Provider,
 				Model:    modelCfg.Name,
+				APIURL:   provider.APIURL,
 			}
 
-			// 创建翻译器实例
-			translator := NewOpenAITranslator(
-				provider.Provider,
-				provider.APIURL,
-				provider.APIKey,
-				modelCfg.Name,
-				timeout,
-				modelCfg.MaxTokens,
-				modelCfg.Temperature,
-			)
+			var translator Translator
 
-			//			log.Println("Translator created:", *translator)
+			switch provider.Provider {
+			case "openai":
+				translator = NewOpenAITranslator(
+					provider.Provider,
+					provider.APIURL,
+					provider.APIKey,
+					modelCfg.Name,
+					timeout,
+					modelCfg.MaxTokens,
+					modelCfg.Temperature,
+				)
+			case "ollama":
+				translator = NewOllamaTranslator(
+					provider.APIURL,
+					modelCfg.Name,
+					timeout,
+				)
+			default:
+				return nil, fmt.Errorf("unsupported provider: %s", provider.Provider)
+			}
 
 			mm.translators[identifier] = translator
 			mm.modelWeights[identifier] = modelCfg.Weight
@@ -92,7 +103,7 @@ func NewModelManager(providers []config.ProviderConfig) (*ModelManager, error) {
 }
 
 // GetModel 获取指定提供商和模型的翻译器
-func (mm *ModelManager) GetModel(provider, model string) (*OpenAITranslator, error) {
+func (mm *ModelManager) GetModel(provider, model string) (Translator, error) {
 	mm.mu.RLock()
 	defer mm.mu.RUnlock()
 
@@ -104,13 +115,13 @@ func (mm *ModelManager) GetModel(provider, model string) (*OpenAITranslator, err
 }
 
 // GetDefaultModel 获取默认模型
-func (mm *ModelManager) GetDefaultModel() *OpenAITranslator {
+func (mm *ModelManager) GetDefaultModel() Translator {
 	mm.mu.RLock()
 	defer mm.mu.RUnlock()
 	return mm.translators[mm.defaultModel]
 }
 
-func (mm *ModelManager) GetRandomModel() *OpenAITranslator {
+func (mm *ModelManager) GetRandomModel() Translator {
 	mm.mu.RLock()
 	defer mm.mu.RUnlock()
 
