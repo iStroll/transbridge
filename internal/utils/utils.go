@@ -11,7 +11,7 @@ import (
 func GenerateCacheKey(text, sourceLang, targetLang string) string {
 	// 组合键的各个部分
 	key := strings.Join([]string{
-		"",
+		sourceLang,
 		targetLang,
 		text,
 	}, ":")
