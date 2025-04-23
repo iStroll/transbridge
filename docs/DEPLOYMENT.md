@@ -60,7 +60,7 @@ cache:
       value: "1h"
     max_size: 10000
 
-auth:
+transapi:
   tokens:
     - "your-api-key"
 ```
