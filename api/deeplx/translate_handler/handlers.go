@@ -13,10 +13,12 @@ import (
 type Handler struct {
 	translationService *service.TranslationService
 	authTokens         map[string]bool // 存储有效的 API 密钥
+	promptTemplate     string          // 👈 新增
 }
 
 type HandlerConfig struct {
-	AuthTokens []string // 配置中的 API 密钥列表
+	AuthTokens     []string // 配置中的 API 密钥列表
+	PromptTemplate string
 }
 
 func NewHandler(translationService *service.TranslationService, config HandlerConfig) *Handler {
@@ -30,6 +32,7 @@ func NewHandler(translationService *service.TranslationService, config HandlerCo
 	return &Handler{
 		translationService: translationService,
 		authTokens:         authTokens,
+		promptTemplate:     config.PromptTemplate, // 👈 设置进去
 	}
 }
 
@@ -59,7 +62,7 @@ func (h *Handler) HandleTranslation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 使用翻译服务处理请求
-	translation, err := h.translationService.Translate(r.Context(), "", "", req.Text, req.SourceLang, req.TargetLang)
+	translation, err := h.translationService.Translate(r.Context(), "", "", h.promptTemplate, req.Text, req.SourceLang, req.TargetLang)
 	if err != nil {
 		h.sendError(w, "Translation failed", "translation_failed", http.StatusInternalServerError)
 		return
