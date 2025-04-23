@@ -38,7 +38,7 @@ func NewTranslationService(modelManager *translator.ModelManager, cache cache.Ca
 }
 
 // Translate 处理翻译请求，自动处理缓存逻辑
-func (s *TranslationService) Translate(ctx context.Context, provider, model, text, sourceLang, targetLang string) (string, error) {
+func (s *TranslationService) Translate(ctx context.Context, provider, model, promptTemplate, text, sourceLang, targetLang string) (string, error) {
 	if text == "" {
 		return "", fmt.Errorf("text is required")
 	}
@@ -83,7 +83,7 @@ func (s *TranslationService) Translate(ctx context.Context, provider, model, tex
 	}
 
 	// 3. 执行翻译
-	translation, err := usedTranslator.Translate(text, sourceLang, targetLang)
+	translation, err := usedTranslator.Translate(promptTemplate, text, sourceLang, targetLang)
 	if err != nil {
 		// 记录失败的翻译
 		return "", fmt.Errorf("translation failed with %s/%s: %w",
@@ -126,7 +126,7 @@ func (s *TranslationService) GetProviderModels(provider string) []string {
 }
 
 // BatchTranslate 批量翻译
-func (s *TranslationService) BatchTranslate(ctx context.Context, requests []TranslateRequest) []struct {
+func (s *TranslationService) BatchTranslate(ctx context.Context, promptTemplate string, requests []TranslateRequest) []struct {
 	Text  string
 	Error error
 } {
@@ -136,7 +136,7 @@ func (s *TranslationService) BatchTranslate(ctx context.Context, requests []Tran
 	}, len(requests))
 
 	for i, req := range requests {
-		translation, err := s.Translate(ctx, req.Provider, req.Model, req.Text, req.SourceLang, req.TargetLang)
+		translation, err := s.Translate(ctx, req.Provider, req.Model, promptTemplate, req.Text, req.SourceLang, req.TargetLang)
 		results[i] = struct {
 			Text  string
 			Error error
