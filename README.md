@@ -23,6 +23,18 @@ TransBridge 是一个强大的翻译 API 代理服务，通过调用各种大模
 
 🔗 API服务: [https://freeapi.fanyimao.cn/](https://freeapi.fanyimao.cn/) 使用 Authorization: Bearer tr-98584e33-f387-42cc-a467-f02513bd400d 进行调用
 
+```shell
+curl --location --request POST 'https://freeapi.fanyimao.cn/translate?token=tr-98584e33-f387-42cc-a467-f02513bd400d' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "text": "你好啊",
+    "source_lang": "cn",
+    "target_lang": "en"
+}'
+```
+
+
+
 在沉浸式翻译中直接配置地址使用：https://freeapi.fanyimao.cn/translate?token=tr-98584e33-f387-42cc-a467-f02513bd400d
 
 ### 获取项目
@@ -41,9 +53,6 @@ cd transbridge
 # 添加执行权限
 chmod +x build.sh
 
-# 显示帮助信息
-./build.sh --help
-
 # 编译当前平台
 ./build.sh
 
@@ -53,17 +62,13 @@ chmod +x build.sh
 # 只编译 Linux 版本
 ./build.sh --linux
 
-# 只编译 macOS 版本
-./build.sh --darwin  
-
-# 只编译 Windows 版本
-./build.sh --windows
-
 # 创建完整发布包
 ./build.sh --release
 ```
 
 编译产物会存放在 `dist/` 目录中，发布包位于 `dist/release/` 目录。
+
+支持`./build.sh --linux`等其他平台参数`--darwin`,`--windows`
 
 #### 手动编译
 
@@ -105,9 +110,9 @@ cache:
     max_size: 10000
 
 prompt:
-  template: "Translate the following text from %s to %s:\n\n%s"
+  template: "Translate the following {{source_lang}} content to {{target_lang}}: {{input}}"
 
-auth:
+transapi:
   tokens:
     - "your-api-key"
 

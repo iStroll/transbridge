@@ -80,6 +80,8 @@ func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, promptTempl
 
 	prompt := utils.ApplyPromptTemplate(promptTemplate, text, slang, tlang)
 
+	log.Println(prompt)
+
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
