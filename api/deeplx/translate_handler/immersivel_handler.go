@@ -34,6 +34,7 @@ func (h *Handler) HandleImmersiveLTranslation(w http.ResponseWriter, r *http.Req
 	// 验证 API Key
 	authHeader := r.Header.Get("Authorization")
 	apiKey := strings.TrimPrefix(authHeader, "Bearer ")
+	log.Println(apiKey, h.authTokens)
 	if apiKey == "" {
 		apiKey = r.URL.Query().Get("token")
 	}

@@ -34,8 +34,26 @@ curl --location --request POST 'https://freeapi.fanyimao.cn/translate?token=tr-9
 ```
 
 
-
+### 在沉浸式翻译中直接使用
+**DeepLx**
 在沉浸式翻译中直接配置地址使用：https://freeapi.fanyimao.cn/translate?token=tr-98584e33-f387-42cc-a467-f02513bd400d
+详细配置说明可以参考:https://github.com/fruitbars/transbridge/issues/3
+
+**自定义API**
+
+本地搭建使用
+```shell
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tr-98584e33-f387-42cc-a467-f02513bd400d" \
+  -d '{
+    "source_lang": "zh",      
+    "target_lang": "en",      
+    "text_list": ["需要翻译的内容"] 
+  }' \
+  "http://127.0.0.1:8080/immersivel"
+```
+
 
 ### 获取项目
 ```bash
