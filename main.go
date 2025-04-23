@@ -134,6 +134,15 @@ func setupServer(cfg *config.Config, translationService *service.TranslationServ
 		),
 	)
 
+	mux.HandleFunc("/immersivel",
+		middleware.Chain(
+			translationHandler.HandleImmersiveLTranslation,
+			middleware.Recovery,
+			middleware.Logger,
+			middleware.CORS,
+		),
+	)
+
 	// 如果启用了 OpenAI 兼容接口，注册相关路由
 	if cfg.OpenAI.CompatibleAPI.Enabled {
 		openaiHandler := openai.NewOpenAIHandler(modelManager, cfg.OpenAI.CompatibleAPI.AuthTokens)
@@ -170,7 +179,7 @@ func setupServer(cfg *config.Config, translationService *service.TranslationServ
 
 	// 创建服务器
 	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
