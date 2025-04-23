@@ -48,11 +48,11 @@ cache:
       value: "permanent"          # 7天 (也可以使用: permanent 表示永久存储)
 
 prompt:
-  template: "Translate the following text from %s to %s:\n\n%s"
+  template: "Translate the following {{source_lang}} content to {{target_lang}}: {{input}}"
 
-auth:
+transapi:
   tokens:
-    - "tr-xxxxxxxxxxxxxxxx"
+    - "tr-98584e33-f387-42cc-a467-f02513bd400d"
 
 log:
   enabled: true
