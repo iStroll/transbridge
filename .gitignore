@@ -2,6 +2,9 @@
 .DS_Store
 Thumbs.db
 
+# 项目可执行文件
+transbridge
+transbridge.exe
 # 编译生成的可执行文件
 *.exe
 *.dll
@@ -35,6 +38,8 @@ config.json
 # 本地构建目录
 build/
 dist/
+logs/translation.log
+logs/*.log
 
 # 测试覆盖率报告
 coverage.out
