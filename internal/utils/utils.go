@@ -3,7 +3,10 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	iso639 "github.com/emvi/iso-639-1"
+	"golang.org/x/text/language"
+	"golang.org/x/text/language/display"
 	"strings"
 )
 
@@ -58,4 +61,42 @@ func SanitizeInput(text string) string {
 func ExtractLanguageCode(code string) string {
 	parts := strings.Split(code, "-")
 	return strings.ToUpper(parts[0])
+}
+
+// ApplyPromptTemplate replaces placeholders in the prompt template with actual values.
+//
+// Supported placeholders:
+//   - {{input}}        → the input text
+//   - {{source_lang}}  → the source language
+//   - {{target_lang}}  → the target language
+//
+// If the template does not contain {{input}}, it is considered invalid,
+// and a default fallback template will be used instead.
+func ApplyPromptTemplate(template, input, sourceLang, targetLang string) string {
+	// Validate the template: must contain {{input}} to be meaningful
+	if !strings.Contains(template, "{{input}}") {
+		template = "Translate the following text from {{source_lang}} to {{target_lang}}:\n\n{{input}}"
+	}
+
+	replacer := strings.NewReplacer(
+		"{{input}}", input,
+		"{{source_lang}}", sourceLang,
+		"{{target_lang}}", targetLang,
+	)
+
+	return replacer.Replace(template)
+}
+
+func GetLanguageName(langCode string) (string, error) {
+	// 解析语言代码
+	tag, err := language.Parse(langCode)
+	if err != nil {
+		return langCode, fmt.Errorf("invalid language code: %w", err)
+	}
+
+	// 使用中文本地化对象
+	display := display.Tags(language.English)
+
+	// 获取 tag 的中文名称
+	return display.Name(tag), nil
 }
