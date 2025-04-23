@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"transbridge/internal/utils"
 )
 
 // TranslationMetrics 翻译指标
@@ -63,19 +64,21 @@ func NewOpenAITranslator(provider, apiURL, apiKey, model string, timeout, maxTok
 }
 
 // Translate 实现翻译功能
-func (t *OpenAITranslator) Translate(text, sourceLang, targetLang string) (string, error) {
+func (t *OpenAITranslator) Translate(promptTemplate, text, sourceLang, targetLang string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t.Timeout)*time.Second)
 	defer cancel()
 
-	return t.TranslateWithContext(ctx, text, sourceLang, targetLang)
+	return t.TranslateWithContext(ctx, promptTemplate, text, sourceLang, targetLang)
 }
 
 // TranslateWithContext 支持上下文的翻译方法
-func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, text, sourceLang, targetLang string) (string, error) {
+func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, promptTemplate, text, sourceLang, targetLang string) (string, error) {
 	log.Println(t.ApiURL, t.Model)
-	// 构造翻译提示
-	prompt := fmt.Sprintf("Translate the following text from %s to %s. Only return the translated text without any explanations:\n\n%s",
-		sourceLang, targetLang, text)
+
+	slang, _ := utils.GetLanguageName(sourceLang)
+	tlang, _ := utils.GetLanguageName(targetLang)
+
+	prompt := utils.ApplyPromptTemplate(promptTemplate, text, slang, tlang)
 
 	messages := []openai.ChatCompletionMessage{
 		{

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"time"
+	"transbridge/internal/utils"
 )
 
 // OllamaTranslator 实现 Ollama 的翻译器
@@ -49,8 +50,11 @@ func NewOllamaTranslator(apiURL, model string, timeout int) *OllamaTranslator {
 }
 
 // Translate 实现翻译接口
-func (t *OllamaTranslator) Translate(text, sourceLang, targetLang string) (string, error) {
-	prompt := fmt.Sprintf("Translate the following text from %s to %s:\n\n%s", sourceLang, targetLang, text)
+func (t *OllamaTranslator) Translate(promptTemplate, text, sourceLang, targetLang string) (string, error) {
+	slang, _ := utils.GetLanguageName(sourceLang)
+	tlang, _ := utils.GetLanguageName(targetLang)
+
+	prompt := utils.ApplyPromptTemplate(promptTemplate, text, slang, tlang)
 
 	reqBody := OllamaRequest{
 		Model: t.model,
