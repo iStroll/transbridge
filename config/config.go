@@ -27,7 +27,8 @@ type LogConfig struct {
 }
 
 type ServerConfig struct {
-	Port int `yaml:"port"`
+	Port int    `yaml:"port"`
+	Host string `yaml:"host"`
 }
 
 type ProviderConfig struct {
