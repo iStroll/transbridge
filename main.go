@@ -121,7 +121,8 @@ func setupServer(cfg *config.Config, translationService *service.TranslationServ
 
 	// 创建处理器
 	translationHandler := translate_handler.NewHandler(translationService, translate_handler.HandlerConfig{
-		AuthTokens: cfg.TransAPI.Tokens,
+		AuthTokens:     cfg.TransAPI.Tokens,
+		PromptTemplate: cfg.Prompt.Template,
 	})
 
 	// 注册翻译接口

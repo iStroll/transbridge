@@ -34,7 +34,7 @@ cache:
       value: "permanent"          # 7天 (也可以使用: permanent 表示永久存储)
 
 prompt:
-  template: "Translate the following {{source_lang}} content to {{target_lang}}: {{input}}"
+  template: "Translate this text from {{source_lang}} to {{target_lang}}. Return only the translated content. No explanation.  \nPreserve filenames and non-linguistic content exactly.\nText: \n\n{{input}}"
 
 openai:
   compatible_api:

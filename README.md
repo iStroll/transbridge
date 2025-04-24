@@ -36,6 +36,7 @@ curl --location --request POST 'https://freeapi.fanyimao.cn/translate?token=tr-9
 
 ### 在沉浸式翻译中直接使用
 **DeepLx**
+
 在沉浸式翻译中直接配置地址使用：https://freeapi.fanyimao.cn/translate?token=tr-98584e33-f387-42cc-a467-f02513bd400d
 详细配置说明可以参考:https://github.com/fruitbars/transbridge/issues/3
 
