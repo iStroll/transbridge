@@ -1,6 +1,7 @@
 # TransBridge 🌉
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
 
 TransBridge 是一个强大的翻译 API 代理服务，通过调用各种大模型 API 实现高质量的机器翻译功能，并提供兼容 DeepL API 接口格式。它提供了丰富的配置选项、灵活的缓存机制和完善的日志记录，可以作为多种大模型翻译服务的统一代理。
 
