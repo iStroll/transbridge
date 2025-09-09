@@ -148,7 +148,12 @@ func setupServer(cfg *config.Config, translationService *service.TranslationServ
 	if cfg.OpenAI.CompatibleAPI.Enabled {
 		openaiHandler := openai.NewOpenAIHandler(modelManager, cfg.OpenAI.CompatibleAPI.AuthTokens)
 
-		mux.HandleFunc("/v1/chat/completions",
+		basePath := cfg.OpenAI.CompatibleAPI.Path
+		if basePath == "" {
+			basePath = "/v1"
+		}
+
+		mux.HandleFunc(basePath+"/chat/completions",
 			middleware.Chain(
 				openaiHandler.HandleChatCompletion,
 				middleware.Recovery,
@@ -157,7 +162,7 @@ func setupServer(cfg *config.Config, translationService *service.TranslationServ
 			),
 		)
 
-		mux.HandleFunc("/v1/models",
+		mux.HandleFunc(basePath+"/models",
 			middleware.Chain(
 				openaiHandler.HandleListModels,
 				middleware.Recovery,

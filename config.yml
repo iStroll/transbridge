@@ -4,12 +4,12 @@ server:
 
 providers:
   - provider: "openai"
-    api_url: "https://api.openai.com/v1/chat/completions"
-    api_key: "your-api-key-1"
+    api_url: "https://xxx.xxx.com/v1/chat/completions"
+    api_key: "xxx"
     timeout: 30
     is_default: true
     models:
-      - name: "gpt-3.5-turbo"
+      - name: "xxx"
         weight: 10
         max_tokens: 2000
         temperature: 0.3

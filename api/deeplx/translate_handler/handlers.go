@@ -3,7 +3,6 @@ package translate_handler
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -14,15 +13,16 @@ type Handler struct {
 	translationService *service.TranslationService
 	authTokens         map[string]bool // 存储有效的 API 密钥
 	promptTemplate     string          // 👈 新增
+	maxConcurrent      int             // 批量接口最大并发
 }
 
 type HandlerConfig struct {
 	AuthTokens     []string // 配置中的 API 密钥列表
 	PromptTemplate string
+	MaxConcurrent  int // 批量接口最大并发（可选）
 }
 
 func NewHandler(translationService *service.TranslationService, config HandlerConfig) *Handler {
-	log.Println(config.AuthTokens)
 	// 将 API 密钥列表转换为 map 以便快速查找
 	authTokens := make(map[string]bool)
 	for _, token := range config.AuthTokens {
@@ -33,6 +33,7 @@ func NewHandler(translationService *service.TranslationService, config HandlerCo
 		translationService: translationService,
 		authTokens:         authTokens,
 		promptTemplate:     config.PromptTemplate, // 👈 设置进去
+		maxConcurrent:      config.MaxConcurrent,
 	}
 }
 
@@ -50,7 +51,6 @@ func (h *Handler) HandleTranslation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.authTokens[apiKey] {
-		log.Println("Invalid API key,key:", apiKey)
 		h.sendError(w, "Invalid API key", "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -58,6 +58,12 @@ func (h *Handler) HandleTranslation(w http.ResponseWriter, r *http.Request) {
 	var req TranslateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.sendError(w, "Invalid request body", "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	// 参数校验
+	if err := h.validateRequest(&req); err != nil {
+		h.sendError(w, err.Error(), "invalid_request", http.StatusBadRequest)
 		return
 	}
 
@@ -91,8 +97,6 @@ func (h *Handler) sendResponse(w http.ResponseWriter, translation, sourceLang, t
 		SourceLang: sourceLang,
 		TargetLang: targetLang,
 	}
-
-	log.Println(resp)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

@@ -3,11 +3,14 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	iso639 "github.com/emvi/iso-639-1"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
-	"strings"
 )
 
 // GenerateCacheKey 生成缓存键
@@ -24,7 +27,7 @@ func GenerateCacheKey(text, sourceLang, targetLang string) string {
 	hasher.Write([]byte(key))
 	md5string := hex.EncodeToString(hasher.Sum(nil))
 
-	return "transbrige:" + md5string
+	return "transbridge:" + md5string
 }
 
 // IsValidLanguageCode 检查语言代码是否有效
@@ -72,10 +75,13 @@ func ExtractLanguageCode(code string) string {
 //
 // If the template does not contain {{input}}, it is considered invalid,
 // and a default fallback template will be used instead.
-func ApplyPromptTemplate(template, input, sourceLang, targetLang string) string {
+func ApplyPromptTemplate(template, input, sourceLang, targetLang string) (string, error) {
+	log.Println(input, sourceLang, targetLang)
+	log.Println(template)
 	// Validate the template: must contain {{input}} to be meaningful
 	if !strings.Contains(template, "{{input}}") {
-		template = "Translate the following text from {{source_lang}} to {{target_lang}}:\n\n{{input}}"
+		log.Println("Invalid prompt template: must contain {{input}}")
+		return "", errors.New("Invalid prompt template: must contain {{input}}")
 	}
 
 	replacer := strings.NewReplacer(
@@ -84,7 +90,7 @@ func ApplyPromptTemplate(template, input, sourceLang, targetLang string) string 
 		"{{target_lang}}", targetLang,
 	)
 
-	return replacer.Replace(template)
+	return replacer.Replace(template), nil
 }
 
 func GetLanguageName(langCode string) (string, error) {

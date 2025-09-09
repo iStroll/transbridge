@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/sashabaranov/go-openai"
+	"io"
 	"log"
 	"net/http"
 	"time"
 	"transbridge/internal/utils"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 // TranslationMetrics 翻译指标
@@ -28,9 +30,11 @@ type OpenAITranslator struct {
 	Model       string
 	Timeout     int
 	MaxTokens   int
+	Top_P       float32
 	Temperature float32
 	Client      *http.Client
 	LastMetrics TranslationMetrics
+	RetryTimes  int
 }
 
 // 确保 OpenAITranslator 实现了 Translator 接口
@@ -60,6 +64,7 @@ func NewOpenAITranslator(provider, apiURL, apiKey, model string, timeout, maxTok
 		Client: &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
+		RetryTimes: 2,
 	}
 }
 
@@ -73,43 +78,42 @@ func (t *OpenAITranslator) Translate(promptTemplate, text, sourceLang, targetLan
 
 // TranslateWithContext 支持上下文的翻译方法
 func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, promptTemplate, text, sourceLang, targetLang string) (string, error) {
-	log.Println(t.ApiURL, t.Model)
-
 	slang, _ := utils.GetLanguageName(sourceLang)
 	tlang, _ := utils.GetLanguageName(targetLang)
 
-	prompt := utils.ApplyPromptTemplate(promptTemplate, text, slang, tlang)
-
-	log.Println(prompt)
+	prompt, err := utils.ApplyPromptTemplate(promptTemplate, text, slang, tlang)
+	if err != nil {
+		return "", fmt.Errorf("failed to apply prompt template: %w", err)
+	}
 
 	messages := []openai.ChatCompletionMessage{
-		{
-			Role:    "system",
-			Content: "You are a professional translator. Translate the text accurately while maintaining its original style and meaning.",
-		},
 		{
 			Role:    "user",
 			Content: prompt,
 		},
 	}
 
+	log.Println("prompt", prompt)
+
 	// 构造请求
 	reqBody := openai.ChatCompletionRequest{
 		Model:       t.Model,
 		Messages:    messages,
+		TopP:        t.Top_P,
 		Temperature: t.Temperature,
 		MaxTokens:   t.MaxTokens,
 	}
 
-	reqData, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
+	reqData, errVar := json.Marshal(reqBody)
+	//	log.Println("reqBody: ", reqBody)
+	if errVar != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", errVar)
 	}
 
 	// 创建请求
-	req, err := http.NewRequestWithContext(ctx, "POST", t.ApiURL, bytes.NewBuffer(reqData))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+	req, errVar := http.NewRequestWithContext(ctx, "POST", t.ApiURL, bytes.NewBuffer(reqData))
+	if errVar != nil {
+		return "", fmt.Errorf("failed to create request: %w", errVar)
 	}
 
 	// 设置请求头
@@ -117,11 +121,30 @@ func (t *OpenAITranslator) TranslateWithContext(ctx context.Context, promptTempl
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.ApiKey))
 
 	// 发送请求
-	resp, err := t.Client.Do(req)
+	var resp *http.Response
+	//var err error
+	for attempt := 0; attempt <= t.RetryTimes; attempt++ {
+		resp, err = t.Client.Do(req)
+		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			break
+		}
+		// 读取错误响应体以便下次重试前释放连接
+		if resp != nil {
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		// 指数退避
+		backoff := time.Duration(200*(1<<attempt)) * time.Millisecond
+		time.Sleep(backoff)
+	}
 	if err != nil {
 		return "", fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("upstream status %d: %s", resp.StatusCode, string(body))
+	}
 
 	// 解析响应
 	var result openai.ChatCompletionResponse
@@ -201,8 +224,6 @@ func (t *OpenAIChatCompletion) CreateChatCompletion(ctx context.Context, oaiRequ
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	log.Println(string(reqData))
-
 	req, err := http.NewRequestWithContext(ctx, "POST",
 		t.ApiURL,
 		bytes.NewBuffer(reqData))
@@ -215,7 +236,6 @@ func (t *OpenAIChatCompletion) CreateChatCompletion(ctx context.Context, oaiRequ
 
 	resp, err := t.Client.Do(req)
 	if err != nil {
-		log.Println(err)
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
