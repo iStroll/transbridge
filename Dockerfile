@@ -10,6 +10,6 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/transbridge .
-COPY --from=builder /app/config.example.yml ./config.yml
+COPY --from=builder /app/config.yml ./config.yml
 EXPOSE 8080
 CMD ["./transbridge"]
